@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.sb.video.streaming.dto.UserLoginDTO;
+import com.sb.video.streaming.services.UserService;
 import com.sb.video.streaming.utils.JwtUtils;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @Controller
 @Tag(name = "Home APIs", description = "Signup & Login APIs")
 public class HomeController {
@@ -30,6 +33,9 @@ public class HomeController {
     private UserDetailsService userDetailsService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private JwtUtils jwtUtils;
     
     @GetMapping("/login")
@@ -39,14 +45,16 @@ public class HomeController {
 
     @PostMapping("/login")
     @ResponseBody
-    public ResponseEntity<?> login(@RequestBody UserLoginDTO user) {
+    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO user) {
        try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
             UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
             String jwt = jwtUtils.generateToken(userDetails.getUsername());
-            return new ResponseEntity<>(jwt,HttpStatus.OK);
+            log.info("User logged in successfully: {}", userService.getUserByName(userDetails.getUsername()).getUser_id());
+            return ResponseEntity.status(HttpStatus.OK).body(jwt);
        } catch (Exception e) {
-            return new ResponseEntity<>("Invalid username or password",HttpStatus.UNAUTHORIZED);
+            log.warn("Failed to authenticate user: {}", user.getUsername());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
        }
         
     }

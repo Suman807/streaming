@@ -1,5 +1,6 @@
 package com.sb.video.streaming.config;
 
+import com.sb.video.streaming.filter.AccessLogFilter;
 import com.sb.video.streaming.filter.JwtFilter;
 import com.sb.video.streaming.model.User;
 
@@ -28,9 +29,13 @@ public class SecurityConfig {
     // @Autowired
     // private CustomAuthenticationSuccessHandler successHandler;
 
-    @Autowired
-    private JwtFilter jwtFilter;
+    private final JwtFilter jwtFilter;
+    private final AccessLogFilter accessLogFilter;
 
+    public SecurityConfig(JwtFilter jwtFilter, AccessLogFilter accessLogFilter) {
+        this.jwtFilter = jwtFilter;
+        this.accessLogFilter = accessLogFilter;
+    }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder(){
@@ -66,6 +71,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+            .addFilterBefore(accessLogFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
             // .formLogin(login -> login
             //     .loginPage("/login")
